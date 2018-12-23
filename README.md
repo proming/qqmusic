@@ -17,4 +17,4 @@ $ pip install requests mutagen
 待完善
 
 ## 声明
-本程序只是个人研究学习python所编写，请勿发布传播。
+本程序只是个人研究学习python所编写，所下载音乐文件请勿发布传播并在24小时内删除。
