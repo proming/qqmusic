@@ -143,6 +143,9 @@ def querySong(songmid, isalbum=False, albumdate='', belongcd='', cdidx=1, dicsnu
     songname = filelist['songname']
     singername = filelist['singername']
     albumname = filelist['albumname']
+
+    mp3_h = mp3_h.replace('dl.stream.qqmusic.qq.com', 'streamoc.music.tc.qq.com')
+
     if singername.count('/') > 4:
         singername = '群星'
     singername = singername.replace('/', ',')
@@ -265,37 +268,43 @@ def modifyTags(songpath, pic, singername, songname, albumname, isalbum=False, al
     meta.save()
 
 if __name__ == '__main__':
-    basepath = "/Users/xxx/Downloads/Music"
+    basepath = "/Users/fulongming/Downloads/Music"
     musicpath = basepath
 
-    date = '2018_49'
-    topid = 26
+    date = '2019-03-10'
+    topid = 4
     songbegin = 0
-    songnum = 200
-    #parseTopList(date, topid, songbegin, songnum)
+    songnum = 50
+    parseTopList(date, topid, songbegin, songnum)
 
-    disstid = '6076150222'
-    #parsePlayList(disstid)
-
-    #songurl="https://y.qq.com/n/yqq/song/000GDDuQ3sGQiT.html"
-    songmid='000GDDuQ3sGQiT'
+    #songurl="https://y.qq.com/n/yqq/song/004377vA0rh3h3.html"
+    songmid='004377vA0rh3h3'
     #querySong(songmid)
 
-    songpath = '/Users/xxx/Downloads/Music/王菲 - 出路.mp3'
+    #songpath = '张信哲 - 不要对他说.mp3'
+    songpath = '王菲 - 出路.mp3'
     pic = 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000SQzfv3pCfGH.jpg?max_age=2592000'
     singername = '王菲'
     songname = '出路'
     albumname = '情·菲·得意'
     #modifyTags(songpath, pic, singername, songname, albumname)
 
-    singermid = '000GDDuQ3sGQiT'
+    singermid = '003ArN8Z0WpjTz'
     #parseSinger(singermid)
 
-    albummid = '002asxPQ3Mr5LA'
+    disstid = '4264151345'
+    #parsePlayList(disstid)
+
+    albummid = '003xIVLL0yHX94'
     #parseAlbum(albummid)
 
     albummlist=[
-        '002asxPQ3Mr5LA',
-        '004JTvsH1b3tA9'
+        '004aYDgO0un78W',
+        '0003hrx91JovyH',
+        '000Wsu871b8zVy',
+        '002zVQv02TrKji',
+        '0014K0HD1fC7Lr',
+        '004ZmiM63niV7P',
+        '0024Cm2Q01GWyZ'
     ]
-    parseAlbumList(albummlist)
+    #parseAlbumList(albummlist)
