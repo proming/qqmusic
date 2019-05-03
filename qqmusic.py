@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 import os, json, requests, urllib, time, mutagen.id3
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB, TDRC, TPOS, TRCK
+import random
 
 def parseTopList(date, topid, songbegin = 0, songnum = 30):
     """
@@ -135,6 +136,38 @@ def parsePlayList(disstid):
         querySong(songmid)
         time.sleep(2)
 
+def moreSound(songmid, songname):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel) Gecko/20100101 Firefox/63.0',
+        'Cache-Control': 'max-age=0, no-cache',
+        'Host': 'moresound.tk',
+        'Cookie': 'sign=BmXrZ2BrZ%s%s; ddos=1; XLA_CI=ae611fa29193d2e627e93ad9ba70981a' % (getRandomChar(6),'%3D%3D')
+    }
+    queryurl = 'http://moresound.tk/music/api.php?search=qq'
+    try:
+        params = {
+            'mid':'%s/0' % songmid
+        }
+        response = requests.post('http://moresound.tk/music/api.php?get_song=qq', data = params, headers=headers)
+        songurl = response.json()['url']['320MP3']
+
+        response = requests.get('http://moresound.tk/music/%s' % songurl, headers=headers)
+        songurl = response.json()['url']
+        return songurl
+
+    except (Exception):
+        print("MoreSound: No 320MP3 %s(%s)" % (songname, songmid))
+        return ''
+
+char = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+        'W', 'X', 'Y', 'Z']
+
+def getRandomChar(num):
+    return "".join(random.sample(char, num))
+
 def querySong(songmid, isalbum=False, albumdate='', belongcd='', cdidx=1, dicsnum=1):
     songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
     response = requests.get("http://www.douqq.com/qqmusic/qqapi.php", params={'mid':songurl})
@@ -144,7 +177,10 @@ def querySong(songmid, isalbum=False, albumdate='', belongcd='', cdidx=1, dicsnu
     singername = filelist['singername']
     albumname = filelist['albumname']
 
-    mp3_h = mp3_h.replace('dl.stream.qqmusic.qq.com', 'streamoc.music.tc.qq.com')
+    mp3_h = moreSound(songmid, songname)
+
+    #mp3_h = mp3_h.replace('dl.stream.qqmusic.qq.com', 'streamoc.music.tc.qq.com')
+    #mp3_h = mp3_h.replace('https', 'http')
 
     if singername.count('/') > 4:
         singername = '群星'
@@ -268,43 +304,43 @@ def modifyTags(songpath, pic, singername, songname, albumname, isalbum=False, al
     meta.save()
 
 if __name__ == '__main__':
-    basepath = "/Users/fulongming/Downloads/Music"
+    basepath = "/Users/xxx/Downloads/Music"
     musicpath = basepath
 
-    date = '2019-03-10'
-    topid = 4
+    #https://y.qq.com/n/yqq/toplist/26.html#t1=2019&t2=17&t3=song&t4=0&t5=1
+    date = '2019_17'
+    topid = 26
     songbegin = 0
-    songnum = 50
-    parseTopList(date, topid, songbegin, songnum)
+    songnum = 200
+    #parseTopList(date, topid, songbegin, songnum)
 
     #songurl="https://y.qq.com/n/yqq/song/004377vA0rh3h3.html"
-    songmid='004377vA0rh3h3'
+    songmid='001IltNp2K0tGr'
     #querySong(songmid)
 
     #songpath = '张信哲 - 不要对他说.mp3'
-    songpath = '王菲 - 出路.mp3'
-    pic = 'https://y.gtimg.cn/music/photo_new/T002R300x300M000000SQzfv3pCfGH.jpg?max_age=2592000'
-    singername = '王菲'
-    songname = '出路'
-    albumname = '情·菲·得意'
+    songpath = '/Users/fulongming/Downloads/Music/王琪 - 站着等你三千年.mp3'
+    pic = 'https://y.gtimg.cn/music/photo_new/T002R300x300M000004CqsM73IMs7y.jpg?max_age=2592000'
+    singername = '王琪'
+    songname = '站着等你三千年'
+    albumname = '站着等你三千年'
     #modifyTags(songpath, pic, singername, songname, albumname)
 
+    #https://y.qq.com/n/yqq/singer/004V53Ga0bV65j.html
     singermid = '003ArN8Z0WpjTz'
     #parseSinger(singermid)
 
+    #https://y.qq.com/n/yqq/playsquare/6938020960.html
     disstid = '4264151345'
     #parsePlayList(disstid)
 
+    #https://y.qq.com/n/yqq/album/004JoMGA19g7aV.html
     albummid = '003xIVLL0yHX94'
     #parseAlbum(albummid)
 
     albummlist=[
         '004aYDgO0un78W',
         '0003hrx91JovyH',
-        '000Wsu871b8zVy',
-        '002zVQv02TrKji',
-        '0014K0HD1fC7Lr',
-        '004ZmiM63niV7P',
-        '0024Cm2Q01GWyZ'
+        '000Wsu871b8zVy'
     ]
     #parseAlbumList(albummlist)
