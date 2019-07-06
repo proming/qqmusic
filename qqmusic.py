@@ -27,13 +27,28 @@ def parseTopList(date, topid, songbegin = 0, songnum = 30):
     }
     response = requests.get(listurl, headers=headers)
     songlist = response.json()['songlist']
+
+    compareTopList(songlist)
+
     for song in songlist:
         count = count + 1
         songmid = song['data']['songmid']
         songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
         print('%d : %s' % (count, songurl))
         querySong(songmid)
-        time.sleep(2)
+
+def compareTopList(songlist):
+    namelist = [song['data']['songname'] for song in songlist]
+
+    filelist = os.listdir(basepath)
+    for file in filelist:
+        if not file.endswith('.mp3'):
+            continue
+        filename = file.split(' - ')[1][:-4]
+        if filename not in namelist:
+            print('Delete %s' % file)
+            os.remove('%s/%s' % (basepath, file))
+
 
 def parseSinger(singermid, begin=0, num=20):
     count = 0
@@ -58,7 +73,6 @@ def parseSinger(singermid, begin=0, num=20):
         songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
         print('%d : %s' % (count, songurl))
         querySong(songmid)
-        time.sleep(2)
 
 def parseAlbumList(albummlist):
     for albummid in albummlist:
@@ -95,7 +109,6 @@ def parseAlbum(albummid):
         songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
         print('%d : %s' % (count, songurl))
         querySong(songmid, True, albumdate, belongcd, cdidx, dicsnum)
-        time.sleep(2)
 
     # write album description
     albumdesc = response.json()['data']['desc']
@@ -134,22 +147,39 @@ def parsePlayList(disstid):
         songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
         print('%d : %s' % (count, songurl))
         querySong(songmid)
-        time.sleep(2)
 
-def moreSound(songmid, songname):
+def messapi(songmid, type):
+    queryurl = 'https://v1.itooi.cn/%s/url?id=%s&quality=320&isRedirect=0' % (type, songmid)
+    try:
+        response = requests.get(queryurl)
+        songurl = response.json()['data']
+        if 'M800' in songurl:
+            return songurl
+        else:
+            return ''
+    except (Exception):
+        print("MessAPI: No 320MP3 (%s)" % (songmid))
+        return ''
+
+def moreSound(songmid, songname, type):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel) Gecko/20100101 Firefox/63.0',
         'Cache-Control': 'max-age=0, no-cache',
         'Host': 'moresound.tk',
-        'Cookie': 'sign=BmXrZ2BrZ%s%s; ddos=1; XLA_CI=ae611fa29193d2e627e93ad9ba70981a' % (getRandomChar(6),'%3D%3D')
+        'Cookie': 'sign=BmXrZ2BrZ%s%s; ddos=1; XLA_CI=45723f595e741c8bc1e0aee8d0b26f8f; __ancc_token=UsF4FJrPj0gM+z3KxBACRA==' % (getRandomChar(6),'%3D%3D')
     }
-    queryurl = 'http://moresound.tk/music/api.php?search=qq'
+    queryurl = 'http://moresound.tk/music/api.php?search=%s' % type
     try:
+        mid = '%s'
+        if type == 'qq':
+            mid = '%s/0'
         params = {
-            'mid':'%s/0' % songmid
+            'mid': mid % songmid
         }
-        response = requests.post('http://moresound.tk/music/api.php?get_song=qq', data = params, headers=headers)
+        response = requests.post('http://moresound.tk/music/api.php?get_song=%s' % type, data = params, headers=headers)
         songurl = response.json()['url']['320MP3']
+
+        time.sleep(1)
 
         response = requests.get('http://moresound.tk/music/%s' % songurl, headers=headers)
         songurl = response.json()['url']
@@ -168,6 +198,40 @@ char = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 def getRandomChar(num):
     return "".join(random.sample(char, num))
 
+def getXMMid(songname, singername):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel) Gecko/20100101 Firefox/63.0',
+        'Cache-Control': 'max-age=0, no-cache',
+        'Host': 'moresound.tk',
+        'Cookie': 'sign=BmXrZ2BrZ%s%s; ddos=1; XLA_CI=45723f595e741c8bc1e0aee8d0b26f8f; __ancc_token=UsF4FJrPj0gM+z3KxBACRA==' % (
+        getRandomChar(6), '%3D%3D')
+    }
+    queryurl = 'http://moresound.tk/music/api.php?search=qq'
+    try:
+        params = {
+            'w': '%s' % songname,
+            'p':1,
+            'q':20
+        }
+        xmmid = 0;
+        response = requests.post('http://moresound.tk/music/api.php?search=xm', data=params, headers=headers)
+        songlist = response.json()['song_list']
+        for song in songlist:
+            singerlist = song['singer']
+            for singer in singerlist:
+                if singer['name'].replace(' ', '') in singername.replace(' ', ''):
+                    xmmid = song['songmid']
+                    break
+
+            if xmmid != 0:
+                break
+
+        return xmmid
+
+    except (Exception):
+        print("MoreSound: XiaMi no found %s(%s)" % (songname, singername))
+        return ''
+
 def querySong(songmid, isalbum=False, albumdate='', belongcd='', cdidx=1, dicsnum=1):
     songurl = "https://y.qq.com/n/yqq/song/%s.html" % songmid
     response = requests.get("http://www.douqq.com/qqmusic/qqapi.php", params={'mid':songurl})
@@ -177,7 +241,9 @@ def querySong(songmid, isalbum=False, albumdate='', belongcd='', cdidx=1, dicsnu
     singername = filelist['singername']
     albumname = filelist['albumname']
 
-    mp3_h = moreSound(songmid, songname)
+    #time.sleep(1)
+    #mp3_h = moreSound(xmmid, songname, 'xm')
+    mp3_h = messapi(songmid, 'tencent')
 
     #mp3_h = mp3_h.replace('dl.stream.qqmusic.qq.com', 'streamoc.music.tc.qq.com')
     #mp3_h = mp3_h.replace('https', 'http')
@@ -307,15 +373,15 @@ if __name__ == '__main__':
     basepath = "/Users/xxx/Downloads/Music"
     musicpath = basepath
 
-    #https://y.qq.com/n/yqq/toplist/26.html#t1=2019&t2=17&t3=song&t4=0&t5=1
-    date = '2019_17'
+    #https://y.qq.com/n/yqq/toplist/26.html#t1=2019&t2=16&t3=song&t4=0&t5=1
+    date = '2019_26' #t1_t2
     topid = 26
     songbegin = 0
     songnum = 200
-    #parseTopList(date, topid, songbegin, songnum)
+    parseTopList(date, topid, songbegin, songnum)
 
     #songurl="https://y.qq.com/n/yqq/song/004377vA0rh3h3.html"
-    songmid='001IltNp2K0tGr'
+    songmid='004DmvlX3mwkkL'
     #querySong(songmid)
 
     #songpath = '张信哲 - 不要对他说.mp3'
@@ -331,7 +397,7 @@ if __name__ == '__main__':
     #parseSinger(singermid)
 
     #https://y.qq.com/n/yqq/playsquare/6938020960.html
-    disstid = '4264151345'
+    disstid = '4265834814'
     #parsePlayList(disstid)
 
     #https://y.qq.com/n/yqq/album/004JoMGA19g7aV.html
@@ -341,6 +407,10 @@ if __name__ == '__main__':
     albummlist=[
         '004aYDgO0un78W',
         '0003hrx91JovyH',
-        '000Wsu871b8zVy'
+        '000Wsu871b8zVy',
+        '002zVQv02TrKji',
+        '0014K0HD1fC7Lr',
+        '004ZmiM63niV7P',
+        '0024Cm2Q01GWyZ'
     ]
     #parseAlbumList(albummlist)
